@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>touhou</title>
+  <link rel="stylesheet" href="bootstrap.css"/>
+  <script src="jquery-3.1.1.js"></script>
+  <script src="bootstrap.js"></script>
+  <script src="vue.js"></script>
+  <script src="socket.io-1.4.5.js"></script>
+  <style>
+  .square-content{
+    position:  absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    color: white;
+  }
+  .square-content div {
+    display: table;
+    width: 100%;
+    height: 100%;
+  }
+  .square-content span {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    color: white
+  }
+  .lobby{
+    position:absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width:80vh;
+    height:80vh;
+    background-color: #bbe;
+    display:block;
+  }
+  .game{
+    position:absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 100vh;
+    height: 100vh;
+    display:block;
+  }
+  .hhai{
+    width: 5vh;
+    height: 8vh;
+  }
+  .hhaiarea{
+    background-color: #FFDDDD;
+    width: 80vh;
+    height: 10vh;
+  }
+  .vhai{
+    width: 8vh;
+    height: 5vh;
+  }
+  .vhaiarea{
+    background-color: #DDFFDD;
+    width: 10vh;
+    height: 80vh;
+  }
+  .hdisarea{
+    background-color: #FFFFDD;
+    width: 30vh;
+    height: 20vh;
+  }
+  .vdisarea{
+    background-color: #DDFFFF;
+    width: 20vh;
+    height: 30vh;
+  }
+  .mid{
+    background-color: #DDDDDD;
+    width: 30vh;
+    height: 30vh;
+  }
+  .score{
+    width: 10vh;
+    height: 10vh;
+  }
+  .floatTop{
+    position:absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+  }
+  .floatLeft{
+    position:absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  .floatRight{
+    position:absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  .floatBottom{
+    position:absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  .floatCenter{
+    position:absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  #midzone{
+    width: 70vh;
+    height: 70vh;
+  }
+  </style>
+</head>
+<body>
+  <div id="touhou">
+    <div v-if="game" class="game">
+      <div class="hhaiarea floatTop" id="oppohai">
+        <span v-for="hai in oppoHaiIndex"><button class="hhai">{{hai.name}}</button></span>
+      </div>
+      <div class="vhaiarea floatLeft" id="prevhai">
+        <button class="vhai" v-for="hai in prevHaiIndex">{{hai.name}}</button>
+      </div>
+      <div class="floatCenter" id="midzone">
+        <div class="hdisarea floatTop" id="oppodiscard">
+          {{oppoDiscard}}
+        </div>
+        <div class="vdisarea floatLeft" id="prevdiscard">
+          {{prevDiscard}}
+        </div>
+        <div class="mid floatCenter" id="scoreboard">
+          <div class="score floatTop" id="opposcore">
+            {{opposcore}}
+          </div>
+          <div class="score floatLeft" id="prevscore">
+            {{prevscore}}
+          </div>
+          <div class="score floatCenter" id="round">
+            {{round}}
+          </div>
+          <div class="score floatRight" id="nextscore">
+            {{nextscore}}
+          </div>
+          <div class="score floatBottom" id="selfscore">
+            {{selfscore}}
+          </div>
+        </div>
+        <div class="vdisarea floatRight" id="nextdiscard">
+          {{nextDiscard}}
+        </div>
+        <div class="hdisarea floatBottom" id="selfdiscard">
+          {{selfDiscard}}
+        </div>
+      </div>
+      <div class="vhaiarea floatRight" id="nexthai">
+        <button class="vhai" v-for="hai in nextHaiIndex">{{hai.name}}</button>
+      </div>
+      <div class="hhaiarea floatBottom" id="selfhai">
+        <span v-for="(hai, key) in selfHaiIndex"><button class="hhai" v-on:click="haiDiscard(key)" >{{hai.name}}</button></span>
+      </div>
+    </div>
+    <div v-if="lobby" class="lobby">
+      <button v-on:click="joinQueue" id="start">start</button>
+    </div>
+  </div>
+  <script>
+    var touhou = new Vue({
+      el: '#touhou',
+      data: {
+        game: false,
+        lobby: true,
+        opposcore:undefined,
+        prevscore:undefined,
+        round:undefined,
+        nextscore:undefined,
+        selfscore:undefined,
+        oppoHaiIndex:[{},{},{},{},{},{},{},{},{},{},{},{},{}],
+        prevHaiIndex:[{},{},{},{},{},{},{},{},{},{},{},{},{}],
+        nextHaiIndex:[{},{},{},{},{},{},{},{},{},{},{},{},{}],
+        selfHaiIndex:[{},{},{},{},{},{},{},{},{},{},{},{},{}],
+        oppoDiscard:'',
+        prevDiscard:'',
+        nextDiscard:'',
+        selfDiscard:'',
+        turn:false
+      },
+      methods: {
+        joinQueue: function(){
+          socket.emit('join');
+        },
+        haiDiscard: function(pos){
+          if(this.turn){
+            var discard = this.selfHaiIndex.splice(pos,1);
+            socket.emit('discard', discard[0].index);
+            this.turn = false;
+          }
+        }
+      }
+    })
+    var getRound = function(round){
+      if(round===0){return '东１局';}
+      if(round===1){return '东２局';}
+      if(round===2){return '东３局';}
+      if(round===3){return '东４局';}
+      if(round===4){return '南１局';}
+      if(round===5){return '南２局';}
+      if(round===6){return '南３局';}
+      if(round===7){return '南４局';}
+      if(round===8){return '西１局';}
+      if(round===9){return '西２局';}
+      if(round===10){return '西３局';}
+      if(round===11){return '西４局';}
+    }
+    var getKaze = function(kaze){
+      if((kaze-27)%4===0){return '东';}
+      if((kaze-27)%4===1){return '南';}
+      if((kaze-27)%4===2){return '西';}
+      if((kaze-27)%4===3){return '北';}
+    }
+    var getBigNum = function(index){
+      if(index===0){return '一';}
+      if(index===1){return '二';}
+      if(index===2){return '三';}
+      if(index===3){return '四';}
+      if(index===4){return '五';}
+      if(index===5){return '六';}
+      if(index===6){return '七';}
+      if(index===7){return '八';}
+      if(index===8){return '九';}
+    }
+    var getType = function(type){
+      if(type===0){return '万';}
+      if(type===1){return '条';}
+      if(type===2){return '筒';}
+    }
+    var getName = function(index){
+      var name = '';
+      var reduced = Math.floor(index/4);
+      if(index===16||index===52||index===88)name+='红';
+      if(reduced/9<3){
+        name+=getBigNum(reduced%9);
+        name+=getType(Math.floor(reduced/9));
+      }
+      else{
+        if(reduced===27)name = '东';
+        if(reduced===28)name = '南';
+        if(reduced===29)name = '西';
+        if(reduced===30)name = '北';
+        if(reduced===31)name = '白';
+        if(reduced===32)name = '发';
+        if(reduced===33)name = '中';
+      }
+      return {
+        index: index,
+        name: name
+      };
+    }
+    var haiParse = function(haiIndex){
+      if(typeof haiIndex==='object'){
+        haiIndex.sort(function(a, b){return a-b});
+        return haiIndex.map(getName);
+      }
+      if(typeof haiIndex==='number'){
+        return getName(haiIndex);
+      }
+    }
+    var socket = io('/touhou');
+    socket.on('full', function(){
+      console.log('full');
+      touhou.lobby = false;
+      touhou.game = true;
+      socket.emit('ready');
+    });
+    socket.on('start', function(tehai){
+      console.log(JSON.stringify(tehai));
+      touhou.round = getRound(tehai.round);
+      touhou.selfscore = getKaze(tehai.ji)+' '+tehai.point[0];
+      touhou.nextscore = getKaze(tehai.ji+1)+' '+tehai.point[1];
+      touhou.opposcore = getKaze(tehai.ji+2)+' '+tehai.point[2];
+      touhou.prevscore = getKaze(tehai.ji+3)+' '+tehai.point[3];
+      touhou.selfHaiIndex = haiParse(tehai.haiIndex);
+    });
+    socket.on('draw', function(hai){
+      console.log(hai);
+      touhou.selfHaiIndex.push(haiParse(hai));
+      touhou.turn = true;
+    });
+    socket.on('discard', function(discard){
+      console.log(discard);
+      touhou.selfDiscard=JSON.stringify(discard[0]);
+      touhou.nextDiscard=JSON.stringify(discard[1]);
+      touhou.oppoDiscard=JSON.stringify(discard[2]);
+      touhou.prevDiscard=JSON.stringify(discard[3]);
+    });
+    socket.on('disconnect', function(){
+      console.log('disconnect');
+      touhou.lobby = true;
+      touhou.game = false;
+    });
+  </script>
+</body>
+</html> 
