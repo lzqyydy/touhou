@@ -222,6 +222,7 @@
         haiDiscard: function(pos){
           if(this.turn){
             var discard = this.selfHaiIndex.splice(pos,1);
+            this.selfHaiIndex.sort(function(a, b){return a.index-b.index});
             socket.emit('discard', discard[0].index);
             this.turn = false;
           }
@@ -288,7 +289,6 @@
     }
     var haiParse = function(haiIndex){
       if(typeof haiIndex==='object'){
-        haiIndex.sort(function(a, b){return a-b});
         return haiIndex.map(getName);
       }
       if(typeof haiIndex==='number'){
@@ -310,6 +310,7 @@
       touhou.opposcore = getKaze(tehai.ji+2)+' '+tehai.point[2];
       touhou.prevscore = getKaze(tehai.ji+3)+' '+tehai.point[3];
       touhou.selfHaiIndex = haiParse(tehai.haiIndex);
+      touhou.selfHaiIndex.sort(function(a, b){return a.index-b.index});
     });
     socket.on('draw', function(hai){
       console.log(hai);
@@ -317,7 +318,6 @@
       touhou.turn = true;
     });
     socket.on('discard', function(discard){
-      console.log(discard);
       touhou.selfDiscard=JSON.stringify(discard[0]);
       touhou.nextDiscard=JSON.stringify(discard[1]);
       touhou.oppoDiscard=JSON.stringify(discard[2]);
