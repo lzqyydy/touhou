@@ -60,16 +60,17 @@
     background-color: #FFDDDD;
     width: 80vh;
     height: 10vh;
+    transform-origin: center -300px;
   }
   .vhai{
     width: 8vh;
     height: 5vh;
   }
-  .vhaiarea{
+  /*.vhaiarea{
     background-color: #DDFFDD;
     width: 10vh;
     height: 80vh;
-  }
+  }*/
   .hdisarea{
     background-color: #FFFFDD;
     width: 30vh;
@@ -129,18 +130,21 @@
     width: 70vh;
     height: 70vh;
   }
+  #oppohai{
+  	transform: rotate(180deg);
+  }
+  #prevhai{
+  	transform: rotate(90deg);
+  }
+  #nexthai{
+  	transform: rotate(270deg);
+  }
   </style>
 </head>
 <body>
   <div id="touhou">
     <div v-if="game" class="game">
-      <div class="hhaiarea floatTop" id="oppohai">
-        <span v-for="hai in oppoHaiIndex"><button class="hhai">{{hai.name}}</button></span>
-      </div>
-      <div class="vhaiarea floatLeft" id="prevhai">
-        <button class="vhai" v-for="hai in prevHaiIndex">{{hai.name}}</button>
-      </div>
-      <div class="floatCenter" id="midzone">
+    	<div class="floatCenter" id="midzone">
         <div class="hdisarea floatTop" id="oppodiscard">
           {{oppoDiscard}}
         </div>
@@ -171,8 +175,16 @@
           {{selfDiscard}}
         </div>
       </div>
-      <div class="vhaiarea floatRight" id="nexthai">
-        <button class="vhai" v-for="hai in nextHaiIndex">{{hai.name}}</button>
+      <div class="hhaiarea floatBottom" id="oppohai">
+        <span v-for="hai in oppoHaiIndex"><button class="hhai">{{hai.name}}</button></span>
+      </div>
+      <div class="hhaiarea floatBottom" id="prevhai">
+        <!--<button v-for="hai in prevHaiIndex">{{hai.name}}</button>-->
+        <span v-for="hai in prevHaiIndex"><button class="hhai">{{hai.name}}</button></span>
+      </div>
+      <div class="hhaiarea floatBottom" id="nexthai">
+        <!--<button v-for="hai in nextHaiIndex">{{hai.name}}</button>-->
+        <span v-for="hai in nextHaiIndex"><button class="hhai">{{hai.name}}</button></span>        
       </div>
       <div class="hhaiarea floatBottom" id="selfhai">
         <span v-for="(hai, key) in selfHaiIndex"><button class="hhai" v-on:click="haiDiscard(key)" >{{hai.name}}</button></span>
