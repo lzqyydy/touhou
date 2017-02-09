@@ -60,7 +60,7 @@
     background-color: #FFDDDD;
     width: 80vh;
     height: 10vh;
-    transform-origin: center -300px;
+    transform-origin: 50% -400%;
   }
   .vhai{
     width: 8vh;
@@ -126,9 +126,19 @@
     bottom: 0;
     margin: auto;
   }
+  .operations{
+    position:absolute;
+    top: -10vh;
+    left: 5vh;
+  }
   #midzone{
     width: 70vh;
     height: 70vh;
+  }
+  #result{
+    background-color: #DDDDDD;
+    width: 60vh;
+    height: 50vh;
   }
   #oppohai{
   	transform: rotate(180deg);
@@ -179,15 +189,21 @@
         <span v-for="hai in oppoHaiIndex"><button class="hhai">{{hai.name}}</button></span>
       </div>
       <div class="hhaiarea floatBottom" id="prevhai">
-        <!--<button v-for="hai in prevHaiIndex">{{hai.name}}</button>-->
         <span v-for="hai in prevHaiIndex"><button class="hhai">{{hai.name}}</button></span>
       </div>
       <div class="hhaiarea floatBottom" id="nexthai">
-        <!--<button v-for="hai in nextHaiIndex">{{hai.name}}</button>-->
         <span v-for="hai in nextHaiIndex"><button class="hhai">{{hai.name}}</button></span>        
       </div>
       <div class="hhaiarea floatBottom" id="selfhai">
+        <div class="operations">
+          <button v-on:click="operationHu" :disabled="huDisabled">hu</button>
+          <button v-on:click="operationPass" :disabled="passDisabled">pass</button>
+        </div>
         <span v-for="(hai, key) in selfHaiIndex"><button class="hhai" v-on:click="haiDiscard(key)" >{{hai.name}}</button></span>
+      </div>
+      <div v-if="resultshow" class="floatCenter" id="result">
+        {{JSON.stringify(result)}}
+        <button v-on:click="ready" id="ready">ok</button>
       </div>
     </div>
     <div v-if="lobby" class="lobby">
@@ -213,9 +229,17 @@
         prevDiscard:'',
         nextDiscard:'',
         selfDiscard:'',
-        turn:false
+        turn:false,
+        huDisabled:true,
+        passDisabled:true,
+        result:undefined,
+        resultshow: false
       },
       methods: {
+        ready: function(){
+          socket.emit('ready');
+          this.resultshow = false;
+        },
         joinQueue: function(){
           socket.emit('join');
         },
@@ -226,6 +250,16 @@
             socket.emit('discard', discard[0].index);
             this.turn = false;
           }
+        },
+        operationHu: function(){
+          socket.emit('hu',true);
+          this.huDisabled = false;
+          this.passDisabled = false;
+        },
+        operationPass: function(){
+          socket.emit('hu',false);
+          this.huDisabled = false;
+          this.passDisabled = false;
         }
       }
     })
@@ -322,6 +356,25 @@
       touhou.nextDiscard=JSON.stringify(discard[1]);
       touhou.oppoDiscard=JSON.stringify(discard[2]);
       touhou.prevDiscard=JSON.stringify(discard[3]);
+    });
+    socket.on('hu', function(){
+      touhou.huDisabled = false;
+      touhou.passDisabled = false;
+    });
+    socket.on('roundEnd', function(data){
+      console.log('roundEnd');
+      console.log(data);
+      if(data!==undefined){
+        touhou.result = data;
+        touhou.resultshow = true;
+      }
+      else{
+        touhou.result = '流局';
+        touhou.resultshow = true;
+      }
+    });
+    socket.on('gameEnd', function(){
+
     });
     socket.on('disconnect', function(){
       console.log('disconnect');
